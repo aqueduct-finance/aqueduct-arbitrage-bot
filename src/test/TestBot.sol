@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import '../libraries/TickMath.sol';
+import "../libraries/TickMath.sol";
 
-import '../interfaces/ISuperToken.sol';
-import '../interfaces/IERC20.sol';
-import '../interfaces/ISwapRouter.sol';
-import '../interfaces/IAqueductV1ArbitrageBot.sol';
-import '../interfaces/ITestBot.sol';
+import "../interfaces/ISuperToken.sol";
+import "../interfaces/IERC20.sol";
+import "../interfaces/ISwapRouter.sol";
+import "../interfaces/IAqueductV1ArbitrageBot.sol";
+import "../interfaces/ITestBot.sol";
 
 contract TestBot is ITestBot {
-
     // main state
     IAqueductV1ArbitrageBot bot;
 
@@ -21,7 +20,6 @@ contract TestBot is ITestBot {
     event Swap(uint256 balanceChange0, uint256 balanceChange1);
 
     function swap(uint256 swapAmount, bool zeroForOne) external {
-
         IERC20 token0 = IERC20(bot.externalPool().token0());
         IERC20 token1 = IERC20(bot.externalPool().token1());
 
@@ -35,19 +33,9 @@ contract TestBot is ITestBot {
 
         // find profit maximizing trade
         if (zeroForOne) {
-            bot.flashPool().flash(
-                address(this),
-                swapAmount,
-                0,
-                abi.encode(swapAmount, true)
-            );
+            bot.flashPool().flash(address(this), swapAmount, 0, abi.encode(swapAmount, true));
         } else {
-            bot.flashPool().flash(
-                address(this),
-                0,
-                swapAmount,
-                abi.encode(swapAmount, false)
-            );
+            bot.flashPool().flash(address(this), 0, swapAmount, abi.encode(swapAmount, false));
         }
 
         // get current balances
@@ -57,16 +45,9 @@ contract TestBot is ITestBot {
         emit Swap(newBalanceA - startingBalanceA, newBalanceB - startingBalanceB);
     }
 
-    function uniswapV3FlashCallback(
-        uint256 fee0,
-        uint256 fee1,
-        bytes calldata data
-    ) public {
+    function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) public {
         // decode data
-        (uint256 swapAmount, bool zeroForOne) = abi.decode(
-            data,
-            (uint256, bool)
-        );
+        (uint256 swapAmount, bool zeroForOne) = abi.decode(data, (uint256, bool));
 
         // get aqueduct state
         ISuperToken tokenA;
@@ -88,8 +69,7 @@ contract TestBot is ITestBot {
         // swap a->b on v3 and b->a on aqueduct
         if (zeroForOne) {
             // swap on v3
-            uint256 v3AmountOut =
-            bot.externalRouter().exactInputSingle(
+            uint256 v3AmountOut = bot.externalRouter().exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: bot.externalPool().token0(),
                     tokenOut: bot.externalPool().token1(),
@@ -122,12 +102,11 @@ contract TestBot is ITestBot {
 
             // return loan amount
             IERC20(tokenA.getUnderlyingToken()).transfer(msg.sender, swapAmount + fee0);
-        } 
+        }
         // swap b->a on v3 and a->b on aqueduct
         else {
             // swap on v3
-            uint256 v3AmountOut =
-            bot.externalRouter().exactInputSingle(
+            uint256 v3AmountOut = bot.externalRouter().exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: bot.externalPool().token1(),
                     tokenOut: bot.externalPool().token0(),
@@ -163,10 +142,7 @@ contract TestBot is ITestBot {
         }
     }
 
-    function toSupertokenAmount(ISuperToken token, uint256 amount)
-        private view
-        returns (uint256 supertokenAmount)
-    {
+    function toSupertokenAmount(ISuperToken token, uint256 amount) private view returns (uint256 supertokenAmount) {
         uint8 underlyingDecimals = IERC20(token.getUnderlyingToken()).decimals();
         uint256 factor;
         if (underlyingDecimals < 18) {

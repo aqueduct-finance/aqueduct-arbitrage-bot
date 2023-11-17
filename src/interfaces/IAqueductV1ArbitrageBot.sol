@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import './IAqueductV1Pair.sol';
-import './IAqueductV1Router.sol';
-import './IUniswapV3Pool.sol';
-import './ISwapRouter.sol';
-import './IERC20.sol';
+import "./IAqueductV1Pair.sol";
+import "./IAqueductV1Router.sol";
+import "./IUniswapV3Pool.sol";
+import "./ISwapRouter.sol";
+import "./IERC20.sol";
 
 interface IAqueductV1ArbitrageBot {
-    
     error ARBITRAGE_NOT_PROFITABLE();
 
     error FLASH_LOAN_FORBIDDEN();

@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import './libraries/FullMath.sol';
-import './libraries/TickBitmap.sol';
-import './libraries/TickMath.sol';
-import './libraries/SqrtPriceMath.sol';
+import "./libraries/FullMath.sol";
+import "./libraries/TickBitmap.sol";
+import "./libraries/TickMath.sol";
+import "./libraries/SqrtPriceMath.sol";
 
-import './interfaces/IAqueductV1Pair.sol';
-import './interfaces/IUniswapV3Pool.sol';
-import './interfaces/ISuperToken.sol';
-import './interfaces/IAqueductV1Router.sol';
-import './interfaces/IAqueductV1ArbitrageBot.sol';
-import './interfaces/IERC20.sol';
-import './interfaces/ISwapRouter.sol';
+import "./interfaces/IAqueductV1Pair.sol";
+import "./interfaces/IUniswapV3Pool.sol";
+import "./interfaces/ISuperToken.sol";
+import "./interfaces/IAqueductV1Router.sol";
+import "./interfaces/IAqueductV1ArbitrageBot.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/ISwapRouter.sol";
 
 contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
-
     // main state
     address public owner;
     IAqueductV1Pair public aqueductPool;
@@ -42,8 +41,6 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         require(msg.sender == owner, "revert: only owner");
         _;
     }
-
-
 
     /*
         State changes
@@ -103,7 +100,6 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         token.transfer(to, amount);
     }
 
-
     /*
         Arb math and swapping
     */
@@ -114,11 +110,9 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         uint24 v3Fee;
         uint112 a;
         uint112 b;
-
         // aqueduct tokens
         ISuperToken tokenA;
         ISuperToken tokenB;
-
         // external pool tokens
         IERC20 token0;
         IERC20 token1;
@@ -143,7 +137,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
     function swap() external {
         // get v3 pool state
         PoolState memory poolState;
-        (poolState.startingSqrtPrice,,,,,,) = externalPool.slot0();
+        (poolState.startingSqrtPrice, , , , , , ) = externalPool.slot0();
         poolState.tickSpacing = externalPool.tickSpacing();
         poolState.v3Fee = 1000000 - externalPool.fee();
         poolState.token0 = IERC20(externalPool.token0());
@@ -187,7 +181,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
 
                 // get current v3 pool state
                 uint128 l = externalPool.liquidity();
-                (uint160 p, int24 currentTick,,,,,) = externalPool.slot0();
+                (uint160 p, int24 currentTick, , , , , ) = externalPool.slot0();
 
                 // get current v2 pool state
                 if (reverseAqueductTokens) {
@@ -202,7 +196,9 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
 
                 // (a->b->a) v3 a->b, v2 b->a
                 // swapAmount = amount of a to swap on v3
-                s.sqrtABFee1Fee2 = sqrt(multiplyByFee(multiplyByFee(uint256(poolState.a) * poolState.b, aqueductFee), poolState.v3Fee));
+                s.sqrtABFee1Fee2 = sqrt(
+                    multiplyByFee(multiplyByFee(uint256(poolState.a) * poolState.b, aqueductFee), poolState.v3Fee)
+                );
                 s.numeratorStep1 = FullMath.mulDiv(s.sqrtABFee1Fee2, p, Q96);
 
                 // if the numerator is negative, the trade will not be profitable
@@ -234,12 +230,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
                 // use a flash loan to perfrom the arbitrage
                 // the rest of the execution will be done in self.uniswapV3FlashCallback()
                 uint256 effectiveSwapAmount = finalSwap ? s.swapAmount : s.amountNeeded;
-                flashPool.flash(
-                    address(this),
-                    effectiveSwapAmount,
-                    0,
-                    abi.encode(effectiveSwapAmount, true)
-                );
+                flashPool.flash(address(this), effectiveSwapAmount, 0, abi.encode(effectiveSwapAmount, true));
 
                 totalSwapAmount += effectiveSwapAmount;
 
@@ -251,7 +242,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
 
                 // get current v3 pool state
                 uint128 l = externalPool.liquidity();
-                (uint160 p, int24 currentTick,,,,,) = externalPool.slot0();
+                (uint160 p, int24 currentTick, , , , , ) = externalPool.slot0();
 
                 // get current v2 pool state
                 if (reverseAqueductTokens) {
@@ -266,7 +257,9 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
 
                 // (b->a->b) v3 b->a, v2 a->b
                 // swapAmount = amount of b to swap on v3
-                s.sqrtABFee1Fee2 = sqrt(multiplyByFee(multiplyByFee(uint256(poolState.a) * poolState.b, aqueductFee), poolState.v3Fee));
+                s.sqrtABFee1Fee2 = sqrt(
+                    multiplyByFee(multiplyByFee(uint256(poolState.a) * poolState.b, aqueductFee), poolState.v3Fee)
+                );
                 s.numeratorStep1 = FullMath.mulDiv(s.sqrtABFee1Fee2, Q96, p);
 
                 // if the numerator is negative, the trade will not be profitable
@@ -298,12 +291,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
                 // use a flash loan to perfrom the arbitrage
                 // the rest of the execution will be done in self.uniswapV3FlashCallback()
                 uint256 effectiveSwapAmount = finalSwap ? s.swapAmount : s.amountNeeded;
-                flashPool.flash(
-                    address(this),
-                    0,
-                    effectiveSwapAmount,
-                    abi.encode(effectiveSwapAmount, false)
-                );
+                flashPool.flash(address(this), 0, effectiveSwapAmount, abi.encode(effectiveSwapAmount, false));
 
                 totalSwapAmount += effectiveSwapAmount;
 
@@ -326,19 +314,12 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         emit Arbitrage(zeroForOne, totalSwapAmount, newBalanceA - startingBalanceA, newBalanceB - startingBalanceB);
     }
 
-    function uniswapV3FlashCallback(
-        uint256 fee0,
-        uint256 fee1,
-        bytes calldata data
-    ) public {
+    function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) public {
         // can only be called from the v3 pool
         if (msg.sender != address(flashPool)) revert FLASH_LOAN_FORBIDDEN();
 
         // decode data
-        (uint256 swapAmount, bool zeroForOne) = abi.decode(
-            data,
-            (uint256, bool)
-        );
+        (uint256 swapAmount, bool zeroForOne) = abi.decode(data, (uint256, bool));
 
         // get aqueduct state
         ISuperToken tokenA;
@@ -354,8 +335,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         // swap a->b on v3 and b->a on aqueduct
         if (zeroForOne) {
             // swap on v3
-            uint256 v3AmountOut =
-            externalRouter.exactInputSingle(
+            uint256 v3AmountOut = externalRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: externalPool.token0(),
                     tokenOut: externalPool.token1(),
@@ -388,12 +368,11 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
 
             // return loan amount
             IERC20(tokenA.getUnderlyingToken()).transfer(msg.sender, swapAmount + fee0);
-        } 
+        }
         // swap b->a on v3 and a->b on aqueduct
         else {
             // swap on v3
-            uint256 v3AmountOut =
-            externalRouter.exactInputSingle(
+            uint256 v3AmountOut = externalRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: externalPool.token1(),
                     tokenOut: externalPool.token0(),
@@ -429,10 +408,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         }
     }
 
-    function toSupertokenAmount(ISuperToken token, uint256 amount)
-        private view
-        returns (uint256 supertokenAmount)
-    {
+    function toSupertokenAmount(ISuperToken token, uint256 amount) private view returns (uint256 supertokenAmount) {
         uint8 underlyingDecimals = IERC20(token.getUnderlyingToken()).decimals();
         uint256 factor;
         if (underlyingDecimals < 18) {
@@ -446,10 +422,7 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         }
     }
 
-    function toUnderlyingAmount(ISuperToken token, uint112 amount)
-        private view
-        returns (uint112 underlyingAmount)
-    {
+    function toUnderlyingAmount(ISuperToken token, uint112 amount) private view returns (uint112 underlyingAmount) {
         uint8 underlyingDecimals = IERC20(token.getUnderlyingToken()).decimals();
         uint112 factor;
         if (underlyingDecimals < 18) {
@@ -463,13 +436,11 @@ contract AqueductV1ArbitrageBot is IAqueductV1ArbitrageBot {
         }
     }
 
-
-
     /*
         Pure math
     */
 
-    // multiplies input * fee 
+    // multiplies input * fee
     // fee should be formatted as 1,000,000 - 100*bps (e.g. 0.3% fee --> 1,000,000 - 100*30 = 997000)
     function multiplyByFee(uint256 input, uint24 fee) internal pure returns (uint256) {
         return (input * fee) / 1000000;

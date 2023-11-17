@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 //solhint-disable func-name-mixedcase
 
-import './ISuperToken.sol';
+import "./ISuperToken.sol";
 
 interface IAqueductV1Pair {
     function MINIMUM_LIQUIDITY() external pure returns (uint256);

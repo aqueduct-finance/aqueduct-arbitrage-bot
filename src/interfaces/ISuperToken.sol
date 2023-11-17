@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.8.11;
+pragma solidity >=0.8.11;
 
 /**
  * @title Super token (Superfluid Token + ERC20 + ERC777) interface
  * @author Superfluid
  */
 interface ISuperToken {
-
     /**
      * @dev Returns the number of decimals used to get its user representation.
      * For example, if `decimals` equals `2`, a balance of `505` tokens should
@@ -25,17 +24,17 @@ interface ISuperToken {
     function decimals() external view returns (uint8);
 
     /**************************************************************************
-    * ERC20 & ERC777
-    *************************************************************************/
+     * ERC20 & ERC777
+     *************************************************************************/
 
     /**
      * @dev Returns the amount of tokens owned by an account (`owner`).
      */
-    function balanceOf(address account) external view returns(uint256 balance);
+    function balanceOf(address account) external view returns (uint256 balance);
 
     /**************************************************************************
-    * ERC20
-    *************************************************************************/
+     * ERC20
+     *************************************************************************/
 
     /**
      * @dev Moves `amount` tokens from the caller's account to `recipient`.
@@ -66,7 +65,7 @@ interface ISuperToken {
      * @dev Return the underlying token contract
      * @return tokenAddr Underlying token address
      */
-    function getUnderlyingToken() external view returns(address tokenAddr);
+    function getUnderlyingToken() external view returns (address tokenAddr);
 
     /**
      * @dev Return the underlying token decimals
@@ -80,10 +79,9 @@ interface ISuperToken {
      * @return underlyingAmount The underlying token amount after scaling
      * @return adjustedAmount The super token amount after scaling
      */
-    function toUnderlyingAmount(uint256 amount)
-        external
-        view
-        returns (uint256 underlyingAmount, uint256 adjustedAmount);
+    function toUnderlyingAmount(
+        uint256 amount
+    ) external view returns (uint256 underlyingAmount, uint256 adjustedAmount);
 
     /**
      * @dev Upgrade ERC20 to SuperToken.
